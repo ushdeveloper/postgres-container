@@ -1,7 +1,7 @@
 version: "3.9" 
 name: postgres
 services: 
-  database: 
+  base_database: &base_database
     container_name: ${CONTAINER_NAME:?container name is not defined...}-db
     build: 
       context: . 
@@ -10,14 +10,21 @@ services:
         FROM postgres:16.0 as database
         RUN localedef -i es_ES -c -f UTF-8 -A /usr/share/locale/locale.alias es_ES.UTF-8
         ENV LANG es_ES.utf8
-    # env_file: ./.env
     environment:
       - TZ=America/Argentina/Buenos_Aires
     restart: always
     ports:
-      - ${DB_PORT:-5432}:5432
+      - ${POSTGRES_PORT:-5432}:5432
     volumes:
       - ./docker/data:/var/lib/postgresql/data
       - ./docker/backups:/backups
     extra_hosts:
       - host.docker.internal:host-gateway
+
+  database:
+    <<: *base_database
+
+  dev:
+    <<: *base_database
+    env_file:
+      - ./.env
