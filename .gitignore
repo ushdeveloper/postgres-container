@@ -2,8 +2,9 @@
 .env
 
 # Volumenes de docker
-database
-backups
+docker/
+database/
+backups/
 
 # Logs
 backup.log
