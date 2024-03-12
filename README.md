@@ -27,23 +27,20 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 ## Configuración
 
-### Producción/Desarrollo
+Hay 2 instancias, una para iniciar en bloque con los demas servicios (*database*) y otro que inicia individualmente este servicio (*dev*).
 
-Copiamos el archivo de ejemplo "**.env.sample**", le cambiamos el nombre a "**.env**" y le agregamos los valores a las variables de entorno que correspondan para la instancia requerida y borramos las innecesarias.
+1. Copiamos el archivo de ejemplo "**.env.sample**", le cambiamos el nombre a "**.env**" y le agregamos los valores a las variables de entorno que correspondan para la instancia requerida y borramos las innecesarias.
 
-En produccion hay que cambiar el nombre de los secretos en el archivo **compose.yml**.
+## Iniciar contenedor database
 
-```bash
-cp .env.sample .env
-nano .env
-```
+Este servicio no se inica directamente desde este proyecto.
 
-## Iniciar contenedor
+## Iniciar contenedor dev
 
 La opción "**-d**" se puede sacar si se quiere ver los logs al crear el contenedor.
 
 ```bash
-docker compose up -d production
+docker compose up -d dev
 ```
 
 ## Detener contenedor
@@ -56,7 +53,7 @@ docker compose down
 
 ## Base de Datos
 
-Toda la base de datos se guardara en "**/database/data**"
+Toda la base de datos se guardara en "**/docker/data**"
 
 Para conectarse a una terminal del contenedor (sólo para debug).
 Usar los datos configurados previamente en "**.env**".
@@ -65,6 +62,8 @@ Usar los datos configurados previamente en "**.env**".
 
 **POSTGRES_DB**: está en el archivo "**.env**"
 
+### Debug para database
+
 ```bash
 docker compose exec -it database bash
 
@@ -72,9 +71,18 @@ docker compose exec -it database bash
 psql -U ${POSTGRES_USER} ${POSTGRES_DB}
 ```
 
+### Debug para dev
+
+```bash
+docker compose exec -it dev bash
+
+# dentro del contenedor (root)
+psql -U ${POSTGRES_USER} ${POSTGRES_DB}
+```
+
 ## Backups
 
-Se creó un volumen para guardar los **backups** en "**/backups**".
+Se creó un volumen para guardar los **backups** en "**/docker/backups**".
 
 ### Realizar backup
 
@@ -85,8 +93,20 @@ Usar los datos configurados previamente en "**.env**"
 
 **POSTGRES_DB**: está en el archivo "**.env**"
 
+#### Realizar backups para database
+
 ```bash
 docker compose exec -it database bash
+
+# dentro del contenedor
+pg_dump -U ${POSTGRES_USER} ${POSTGRES_DB} > backups/${POSTGRES_DB}$(date "+%Y%m%d-%H_%M").sql
+exit
+```
+
+#### Realizar backups para dev
+
+```bash
+docker compose exec -it dev bash
 
 # dentro del contenedor
 pg_dump -U ${POSTGRES_USER} ${POSTGRES_DB} > backups/${POSTGRES_DB}$(date "+%Y%m%d-%H_%M").sql
@@ -103,6 +123,8 @@ Para restaurar el backup tenemos que entrar a una shell del contenedor y restaur
 
 **POSTGRES_DB**: está en el archivo "**.env**"
 
+### Restaurar backup para database
+
 ```bash
 # Descomprimo el backup
 cd backups
@@ -111,11 +133,32 @@ cd ..
 
 # Elimino la base datos que existe actualmente
 docker compose -f compose.dev.yml down
-sudo rm -rf database
+sudo rm -rf docker/data
 docker compose -f compose.dev.yml up -d development
 
 # Levanto el backup
 docker compose exec -it database bash
+
+# dentro del contenedor
+psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f backups/NOMBRE_BACKUP.sql
+exit
+```
+
+### Restaurar backup para dev
+
+```bash
+# Descomprimo el backup
+cd backups
+sudo gunzip NOMBRE_BACKUP.sql.gz
+cd ..
+
+# Elimino la base datos que existe actualmente
+docker compose -f compose.dev.yml down
+sudo rm -rf docker data
+docker compose -f compose.dev.yml up -d development
+
+# Levanto el backup
+docker compose exec -it dev bash
 
 # dentro del contenedor
 psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f backups/NOMBRE_BACKUP.sql
