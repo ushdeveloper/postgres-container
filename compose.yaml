@@ -1,7 +1,7 @@
 version: "3.9" 
 name: postgres
 services: 
-  base_database: &base_database
+  base: &base
     container_name: ${CONTAINER_NAME:?container name is not defined...}-db
     build: 
       context: . 
@@ -22,9 +22,9 @@ services:
       - host.docker.internal:host-gateway
 
   database:
-    <<: *base_database
+    <<: *base
 
   dev:
-    <<: *base_database
+    <<: *base
     env_file:
       - ./.env
