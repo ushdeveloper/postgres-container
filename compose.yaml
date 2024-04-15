@@ -8,16 +8,16 @@ services:
       target: database
       dockerfile_inline: | 
         FROM postgres:${POSTGRES_VERSION} as database
-        RUN localedef -i es_ES -c -f UTF-8 -A /usr/share/locale/locale.alias es_ES.UTF-8
-        ENV LANG es_ES.utf8
+        RUN localedef -i es_AR -c -f UTF-8 -A /usr/share/locale/locale.alias es_AR.UTF-8
+        ENV LANG es_AR.utf8
     environment:
       - TZ=America/Argentina/Buenos_Aires
     restart: always
     ports:
       - ${POSTGRES_PORT:-5432}:5432
     volumes:
-      - ./docker/data:/var/lib/postgresql/data
-      - ./docker/backups:/backups
+      - ./docker/volumes/data:/var/lib/postgresql/data
+      - ./docker/volumes/backups:/backups
     extra_hosts:
       - host.docker.internal:host-gateway
 
