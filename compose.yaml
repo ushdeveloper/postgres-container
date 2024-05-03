@@ -1,6 +1,6 @@
 name: ${CONTAINER_NAME:?container name is not defined...}-postgres
 services: 
-  database:
+  base: &base
     container_name: ${CONTAINER_NAME:?container name is not defined...}-db
     build: 
       context: . 
@@ -19,3 +19,11 @@ services:
       - ./docker/volumes/backups:/backups
     extra_hosts:
       - host.docker.internal:host-gateway
+
+  database:
+    <<: *base
+
+  dev:
+    <<: *base
+    env_file:
+      - ./.env
